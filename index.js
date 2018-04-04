@@ -1,6 +1,8 @@
-require('dotenv').config()
+require('dotenv').config();
 
 const TeleBot = require('telebot');
+
+const schedule = require('node-schedule');
 
 const BUTTONS = {
     showMyFeeds: {
@@ -77,16 +79,42 @@ bot.on('/unsubscribe_breaking', (msg) => { unsubscribe(msg, 'breaking') });
 
 bot.on('/no_action', (msg) => { msg.reply.text('You may bring up options again at any time by clicking the button on the bottom right.') });
 
+// Set up scheduled delivery jobs
+
+const shortJob = schedule.scheduleJob('0 8 * * 1-5', () => { runDelivery('short') });
+const breakingJob = schedule.scheduleJob('0 7 * * *', () => { runDelivery('breaking') });
+
 const subscribe = (msg, feed) => {
     const chatId = msg.chat.id;
-    // Add chat ID to subscriber table here if not already there
+    // TODO: Add chat ID to subscriber table here if not already there
     msg.reply.text(`You are now subscribed to the ${feed} feed! You will receive notices each day. (Chat Id: ${chatId})`);
 };
 
 const unsubscribe = (msg, feed) => {
     const chatId = msg.chat.id;
-    // Remove chat ID from subscriber table here if it exists
+    // TODO: Remove chat ID from subscriber table here if it exists
     msg.reply.text(`We are sad to see you go but you are now unsubscribed from the ${feed} notices. (Chat Id: ${chatId})`);
-}
+};
+
+const runDelivery = (feed) => {
+    // TODO: Pull from db query on feed to get subscriber chat ID array
+    const chatIds = [];
+    // TODO: Gather feed data to construct message
+    const content = "";
+    loopDelay(chatIds, feed, content, chatIds.length);
+};
+
+const loopDelay = (ids, feed, content, i) => {
+  setTimeout(() => {
+    try {
+        bot.sendMessage(ids[i - 1], `Delivering your content for ${feed}! ${content}`);
+    } catch (err) {
+        console.log(err.message);
+    }
+    if (--i) {
+      loopDelay(ids, feed, content, i);
+    }
+  }, 1500);
+};
 
 bot.start();
